@@ -1,0 +1,406 @@
+<html>
+
+<head>
+
+  <link rel="stylesheet" type="text/css" href="main.css">
+
+  <meta name="twitter:card" content="photo">
+  <meta name="twitter:site" content="@cabbibo">
+  <meta name="twitter:creator" content="@cabbibo">
+  <meta name="twitter:url" content="http://cabbi.bo">
+  <meta name="twitter:title" content="Long Live Synesthesia">
+  <meta name="twitter:description" content="Long Live Synesthesia">
+  <meta name="twitter:creator" content="@cabbibo">
+  <meta name="twitter:image" content="http://cabbi.bo/image.png">
+  <meta name="twitter:image:width" content="1440">
+  <meta name="twitter:image:height" content="900">
+  <meta name="twitter:domain" content="cabbi.bo">
+  <meta itemprop="name" content="Cabbi.bo">
+  <meta itemprop="description" content="Long Live Synesthesia">
+  <meta itemprop="image" src="http://cabbi.bo/image.png">
+  <meta property="og:title" content="Cabbi.bo">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="http://cabbi.bo/image.png"/>
+  <meta property="og:site_name" content="Cabbi.bo">
+  <meta property="og:description" content="Long Live Synesthesia">
+
+  <style>
+
+    @font-face {
+      font-family: "GeoSans";
+      src: url("lib/GeosansLight.ttf");
+    }
+    html{ color:#fff; background:#000; font-family:"GeoSans"; font-size:20px; overflow:hidden }
+
+    #container{
+      width      : 100%;
+      height     : 100%;
+      position   : absolute;
+      top        : 0px;
+      left       : 0px;
+      background : #000;
+    }
+
+    #stats{
+      position  : absolute;
+      bottom    : -35px;
+
+      left      : 0px;
+      z-index   : 999;
+      opacity: .1;
+    }
+
+    a{
+      color: #fff;
+      position: absolute;
+      z-index: 999;
+    }
+
+    #loading{
+
+      width:100%;
+      text-align:center;
+      padding-top:100px;
+      font-size:25px;
+
+    }
+    
+    a{
+      color: #fff;
+      position: absolute;
+      z-index: 999;
+      bottom:5px;
+      right:10px;
+      text-decoration:none;
+      //underline:none;
+      opacity:.5;
+      font-size: 20px;
+    }
+
+    a:hover{
+
+      text-decoration:underline;
+      opacity:1;
+
+    }
+
+    h1{
+      background: #000;
+      color: #fff;
+      margin: 0px;
+      padding: 5px;
+      font-size:25px;
+      border-bottom:1px solid white;
+    }
+
+    h1:hover{
+
+      background:#777;
+
+    }
+
+    .active{
+      background:#7ca;
+    }
+
+    .close-button{
+  
+      display:none;
+
+    }
+
+    #GUI{
+
+      position:fixed;
+      right:0px;
+      top:0px;
+      z-index:999;
+
+    }
+    
+    </style>
+</head>
+<body>
+
+  <div id="GUI">
+  </div>
+
+  <div id="description">
+    <a href="https://soundcloud.com/pcmus/bronze" target="_blank">Thy Slaughter - Bronze</a>
+  </div>
+  
+<script src = "lib/underscore.js"           ></script>
+<script src = "lib/three.js"                ></script>
+<script src = "lib/jquery.min.js"           ></script>
+<script src = "lib/stats.min.js"            ></script>
+<script src = "lib/TrackballControls.js"    ></script>
+<script src = "lib/ShaderLoader.js"         ></script>
+<script src = "lib/UserAudio.js"            ></script>
+<script src = "lib/Stream.js"               ></script>
+<script src = "lib/AudioController.js"      ></script>
+<script src = "lib/AudioTexture.js"         ></script>
+<script src = "lib/PhysicsRenderer.js"      ></script>
+<script src = "lib/ParticleUtils.js"        ></script>
+<script src = "lib/dat.gui.min.js"          ></script>
+<script src = "lib/OBJLoader.js"            ></script>
+<script src = "lib/Loader.js"               ></script>
+<script src = "lib/SubdivisionModifier.js"  ></script>
+
+<script src="fonts/helvetiker_bold.typeface.js"></script>
+<script src="fonts/helvetiker_regular.typeface.js"></script>
+
+
+<script src = "GEM.js"                      ></script>
+<script src = "GUI.js"                      ></script>
+
+
+<script src = "Arrangements.js"             ></script>
+
+
+<script src = "Text.js"                     ></script>
+<script src = "CurlMesh.js"                 ></script>
+<script src = "N2.js"                 ></script>
+
+<script>
+
+  var container , camera, scene, renderer , stats;
+
+  var gem , gui;
+
+  var tv1 = new THREE.Vector3();
+  var tv2 = new THREE.Vector3();
+  var repelerMeshes = [];
+  var repelersHidden = true;
+
+
+  var REPELERS = [];
+
+
+
+  // TODO: make into loader
+  var loaded = 0;
+  var neededToLoad = 1;
+
+
+  var loader = new Loader();
+  loader.liftCurtain();
+
+  var clock = new THREE.Clock();
+
+  var audioController = new AudioController();
+  //audioController.mute.gain.value = 0;
+  var stream = new Stream(  'audio/Bronze.mp3',audioController  );
+
+  
+  /*var userAudio = new UserAudio( audioController );
+  userAudio.onStreamCreated = function(){
+
+    console.log('asds');
+    onLoad();
+
+  }*/
+
+  var shaders = new ShaderLoader('shaders');
+
+  shaders.load( 'ss-fire' , 'fire' , 'simulation' );
+  shaders.load( 'ss-weird1' , 'weird1' , 'simulation' );
+  shaders.load( 'ss-n2' , 'n2' , 'simulation' );
+  
+  shaders.load( 'vs-fire' , 'fire' , 'vertex' );
+  shaders.load( 'fs-weird1' , 'weird1' , 'fragment' );
+  shaders.load( 'fs-fire' , 'fire' , 'fragment' );
+  
+  
+  shaders.load( 'fs-normal' , 'normal' , 'fragment' );
+
+  shaders.shaderSetLoaded = function(){
+   onLoad();
+  }
+
+
+  var modifier = new THREE.SubdivisionModifier( 0 );
+  var loadedMeshes = {}
+  
+  
+  var G_UNIFORMS = {
+
+    dT      : { type:"f" , value:0                            },
+    time    : { type:"f" , value:0                            },
+    t_audio : { type:"t" , value: audioController.texture     },
+
+  }
+
+
+
+
+
+ function init(){
+
+
+    scene = new THREE.Scene();
+    
+    camera = new THREE.PerspectiveCamera( 
+      50 ,
+      window.innerWidth / window.innerHeight,
+      1,
+      5000
+    );
+
+    // placing our camera position so it can see everything
+    camera.position.z = 10 ;
+    camera.position.y = 10 ;
+    camera.position.x = 10 ;
+    camera.lookAt( new THREE.Vector3() );
+
+
+    // Getting the container in the right location
+    container     = document.createElement( 'div' );
+    container.id  = 'container';
+    
+    document.body.appendChild( container );
+
+    // Getting the stats in the right position
+    stats = new Stats();
+    stats.domElement.id = 'stats';
+    document.body.appendChild( stats.domElement );
+
+
+    // Setting up our Renderer
+    renderer = new THREE.WebGLRenderer({ alpha: true });
+
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    container.appendChild( renderer.domElement );
+    renderer.domElement.style.background="#000";
+    
+    controls = new THREE.TrackballControls( camera , renderer.domElement);
+
+    controls.minDistance = 1;
+    controls.maxDistance = 3000;
+
+    // Making sure our renderer is always the right size
+    window.addEventListener( 'resize', onWindowResize , false );
+    window.addEventListener( 'mousemove', onMouseMove , false );
+   
+  
+    var g = new THREE.Mesh( new THREE.CubeGeometry( 3 , 3 , 3 , 20 , 20 , 20 ) );
+    //var g = new THREE.Mesh( new THREE.IcosahedronGeometry( 3 , 4 ) );
+    gem = new N2( 'TOUCH ME HERE' , g ); 
+
+    gem.toggle();
+
+    gem1 = gem.body.clone();
+    scene.add( gem1 );
+    gem1.scale.multiplyScalar( 10 );
+
+  }
+
+
+  function animate(){
+
+    audioController.update();
+
+    G_UNIFORMS.dT.value = clock.getDelta();
+    G_UNIFORMS.time.value += G_UNIFORMS.dT.value;
+
+    gem.update();
+
+   /* gem.soul.debugScene.position.copy( camera.position );
+
+    tv1.set( 0 , 0, -30 );
+    tv1.applyQuaternion( camera.quaternion );
+    gem.soul.debugScene.position.add( tv1 );
+    gem.soul.debugScene.lookAt( camera.position );*/
+
+
+    stats.update();
+
+    controls.update();
+
+    for( var i = 0; i < REPELERS.length; i++ ){
+
+      //console.log( REPELERS[i].target );
+      tv1.copy( REPELERS[i].target );
+      tv1.sub( REPELERS[i].position );
+
+      tv1.multiplyScalar( .1 );
+
+      //console.log( tv1.x );
+      REPELERS[i].position.add( tv1 );
+       
+      var ind = i / (2 * REPELERS.length); 
+      var fI = Math.floor( ind * audioController.analyzer.array.length );
+      var p = audioController.analyzer.array[ fI ];
+
+      //console.log( p );
+      REPELERS[i].power.x = p / 256;
+      
+    }
+
+    renderer.render( scene , camera );
+
+    requestAnimationFrame( animate );
+
+  }
+
+
+  function onMouseMove(e ){
+
+ 
+  }
+
+  // Resets the renderer to be the proper size
+  function onWindowResize(){
+
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
+
+    renderer.setSize( window.innerWidth, window.innerHeight );
+   
+    var dpr = devicePixelRatio || 1;
+
+    //camUniforms.SS.value.x = window.innerWidth * dpr;
+    //camUniforms.SS.value.y = window.innerHeight * dpr;
+
+
+  }
+
+
+  function onLoad(){
+
+
+    loaded ++;
+
+    console.log(loaded );
+    if( loaded === neededToLoad ){
+
+      init();
+      animate();
+      
+   
+      if( stream ){
+      
+        stream.play();
+
+      }
+
+    }
+
+  }
+
+  function toCart( r , t , p ){
+
+    var x = r *(Math.sin(t))*(Math.cos(p));
+    var y = r *(Math.sin(t))*(Math.sin(p));
+    var z = r * (Math.cos(t));
+
+    return new THREE.Vector3(x,y,z);
+
+  }
+
+
+</script>
+
+
+</body>
+</html>
